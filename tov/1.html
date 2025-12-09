@@ -2177,14 +2177,14 @@
 //TAMBAHAN MULA
 
 
-// 🆕 Meta: 0 = elektif, 1 = wajib (teras)
-let subjectFlagMap = {};
+
 //TAMBAHAN TAMAT
               
                 let headerMap = {},
                     subjectColumns = [],
                     cachedData = null,
-                    gradeChartInstance = null;
+                    gradeChartInstance = null,
+                    subjectFlagMap = {};
 
                 // GPMP sort (subjek)
                 let subjectStatsCurrent = [],
@@ -2295,8 +2295,6 @@ let subjectFlagMap = {};
 */
 //TAMBAHAN MULA
 
-           // 🆕 Meta flag: 0 = elektif, 1 = wajib (global, di atas)
-let subjectFlagMap = {};
 
 function parseCSV(csv) {
     // Buang baris kosong
