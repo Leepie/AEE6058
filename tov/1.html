@@ -2750,9 +2750,17 @@ function kiraHeaderKPI(data) {
                         }
                     });
 
-                    document.getElementById("kpiGPS").textContent = (jumlahSubjek ? (jumlahGredNilai / jumlahSubjek).toFixed(2) : "--");
-                    document.getElementById("kpiLayak").textContent = (jumlahMurid ? ((muridLayak / jumlahMurid) * 100).toFixed(1) + "%" : "--");
-                    document.getElementById("kpiMurid").textContent = jumlahMurid;
+ //                   document.getElementById("kpiGPS").textContent = (jumlahSubjek ? (jumlahGredNilai / jumlahSubjek).toFixed(2) : "--");
+   //                 document.getElementById("kpiLayak").textContent = (jumlahMurid ? ((muridLayak / jumlahMurid) * 100).toFixed(1) + "%" : "--");
+     //               document.getElementById("kpiMurid").textContent = jumlahMurid;
+
+                    // 🔄 Guna helper standard yang sama seperti header
+const hasil = kiraGPSDaripadaRows(rowsTerpilih);
+
+document.getElementById("kpiGPS").textContent   = hasil.gps;
+document.getElementById("kpiLayak").textContent = hasil.peratusLayak;
+document.getElementById("kpiMurid").textContent = hasil.jumlahMurid;
+
 
                     // Murid terbaik
                     muridList.sort((a, b) => a.gp - b.gp);
