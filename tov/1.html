@@ -2703,89 +2703,147 @@ function kiraHeaderKPI(data) {
                 }
 
                 /* ========= TAB 1: ========= */
-                function generateOverallAnalysis() {
-                    const kelasHeader = cariKolum("kelas"),
-                        namaHeader = cariKolum("nama");
-                    const kelasTerpilih = document.getElementById("kelasFilter").value;
 
-                    let dataTapis = (!kelasTerpilih || kelasTerpilih === "SEMUA KELAS") ? cachedData : cachedData.filter(r => r[kelasHeader] === kelasTerpilih);
+function getWajibColumns() {
+    return subjectColumns.filter(colName => {
+        const subjCode = (colName.split(" ")[0] || "").toUpperCase();
+        const flag = subjectFlagMap[subjCode];
+        if (flag === "0") return false;   // elektif
+        return true;                      // 1 atau tiada flag → kira
+    });
+}
 
-                    // KPI
-                    let jumlahMurid = 0,
-                        jumlahGredNilai = 0,
-                        jumlahSubjek = 0,
-                        muridLayak = 0;
-                    const bmCol = cariKolumGredSubjek("BM");
-                    const sejCol = cariKolumGredSubjek("SEJ");
+function kiraGPSDaripadaRows(rows) {
+    const bmCol  = cariKolumGredSubjek("BM");
+    const sejCol = cariKolumGredSubjek("SEJ");
+    const wajibColumns = getWajibColumns();
 
-                    let muridList = [];
-                    dataTapis.forEach(row => {
-                        const nama = row[namaHeader];
-                        let gredList = [];
-                        subjectColumns.forEach(c => {
-                            const g = row[c]?.toUpperCase();
-                            if (gradeValueMapping.hasOwnProperty(g)) {
-                                gredList.push(g);
-                                jumlahGredNilai += gradeValueMapping[g];
-                                jumlahSubjek++;
-                            }
-                        });
-                        if (gredList.length) {
-                            jumlahMurid++;
-                            const bm = (bmCol ? row[bmCol] : "").toUpperCase();
-                            const sej = (sejCol ? row[sejCol] : "").toUpperCase();
-                            if (bm && sej && bm !== "G" && sej !== "G") muridLayak++;
+    let jumlahNilai  = 0;
+    let bilGred      = 0;
+    let jumlahMurid  = 0;
+    let layak        = 0;
 
-                            const gp = (gredList.reduce((a, g) => a + gradeValueMapping[g], 0) / gredList.length).toFixed(2);
-                            const counts = topGradeLabels.reduce((acc, g) => {
-                                acc[g] = gredList.filter(x => x === g).length;
-                                return acc;
-                            }, {});
-                            muridList.push({
-                                nama,
-                                kelas: row[kelasHeader],
-                                gp,
-                                counts
-                            });
-                        }
-                    });
+    rows.forEach(row => {
+        let adaGred = false;
 
- //                   document.getElementById("kpiGPS").textContent = (jumlahSubjek ? (jumlahGredNilai / jumlahSubjek).toFixed(2) : "--");
-   //                 document.getElementById("kpiLayak").textContent = (jumlahMurid ? ((muridLayak / jumlahMurid) * 100).toFixed(1) + "%" : "--");
-     //               document.getElementById("kpiMurid").textContent = jumlahMurid;
+        wajibColumns.forEach(col => {
+            const g = (row[col] || "").toUpperCase();
+            if (gradeValueMapping.hasOwnProperty(g)) {
+                jumlahNilai += gradeValueMapping[g];
+                bilGred++;
+                adaGred = true;
+            }
+        });
 
-                    // 🔄 Guna helper standard yang sama seperti header
-const hasil = kiraGPSDaripadaRows(rowsTerpilih);
+        if (adaGred) {
+            jumlahMurid++;
 
-document.getElementById("kpiGPS").textContent   = hasil.gps;
-document.getElementById("kpiLayak").textContent = hasil.peratusLayak;
-document.getElementById("kpiMurid").textContent = hasil.jumlahMurid;
+            const bm  = (bmCol  ? row[bmCol]  : "").toUpperCase();
+            const sej = (sejCol ? row[sejCol] : "").toUpperCase();
+            if (bm && sej && bm !== "G" && sej !== "G") {
+                layak++;
+            }
+        }
+    });
 
+    const gps = bilGred
+        ? (jumlahNilai / bilGred).toFixed(2)
+        : "-";
 
-                    // Murid terbaik
-                    muridList.sort((a, b) => a.gp - b.gp);
-                    const top = document.getElementById("topStudentsCount").value;
-                    const body = document.getElementById("muridTerbaikBody");
-                    body.innerHTML = "";
-                    muridList.slice(0, top).forEach((m, i) => {
-                        body.innerHTML += `
-                  <tr class="text-center">
-                    <td class="px-2.5 py-2">${i+1}</td>
-                    <td class="px-2.5 py-2 text-left">${m.nama}</td>
-                    <td class="px-2.5 py-2">${m.kelas}</td>
-                    <td class="px-2.5 py-2 font-bold text-blue-600">${m.gp}</td>
-                    ${topGradeLabels.map(g=>`<td class="px-2.5 py-2">${m.counts[g]||0}</td>`).join("")}
-                  </tr>`;
-                    });
+    const peratusLayak = jumlahMurid
+        ? ((layak / jumlahMurid) * 100).toFixed(1) + "%"
+        : "-";
 
-                    // Carta
-                    updateGradeChartBySubject(dataTapis);
-                    // Jadual subjek
-                    updateSubjectAnalysis(dataTapis);
+    return { gps, peratusLayak, jumlahMurid, layak };
+}
 
-                    // TUNJUKKAN semua kad hasil (tab 1)
-                    document.querySelectorAll('[data-tab-panel="keseluruhan"][data-reveal]').forEach(p => p.classList.remove('hidden'));
-                }
+//START ASAL SINI
+                
+function generateOverallAnalysis() {
+    const kelasHeader = cariKolum("kelas"),
+          namaHeader  = cariKolum("nama");
+    const kelasTerpilih = document.getElementById("kelasFilter").value;
+
+    // 🔹 Tapis ikut kelas / semua kelas
+    let dataTapis = (!kelasTerpilih || kelasTerpilih === "SEMUA KELAS")
+        ? cachedData
+        : cachedData.filter(r => r[kelasHeader] === kelasTerpilih);
+
+    // =======================
+    // 1. KPI (Gred Purata, Layak Sijil, Jumlah Murid)
+    //    → guna helper standard yang sama dengan header
+    // =======================
+    const hasil = kiraGPSDaripadaRows(dataTapis);
+
+    document.getElementById("kpiGPS").textContent   = hasil.gps;
+    document.getElementById("kpiLayak").textContent = hasil.peratusLayak;
+    document.getElementById("kpiMurid").textContent = hasil.jumlahMurid;
+
+    // =======================
+    // 2. Senarai Murid Terbaik (kekal macam asal)
+    // =======================
+    let muridList = [];
+
+    dataTapis.forEach(row => {
+        const nama = row[namaHeader];
+        let gredList = [];
+
+        // ambil semua gred (untuk kira GP individu & pecahan A+, A, A- ... )
+        subjectColumns.forEach(c => {
+            const g = (row[c] || "").toUpperCase();
+            if (gradeValueMapping.hasOwnProperty(g)) {
+                gredList.push(g);
+            }
+        });
+
+        if (gredList.length) {
+            const gp = (
+                gredList.reduce((a, g) => a + gradeValueMapping[g], 0) /
+                gredList.length
+            ).toFixed(2);
+
+            const counts = topGradeLabels.reduce((acc, g) => {
+                acc[g] = gredList.filter(x => x === g).length;
+                return acc;
+            }, {});
+
+            muridList.push({
+                nama,
+                kelas: row[kelasHeader],
+                gp,
+                counts
+            });
+        }
+    });
+
+    // Susun ikut GP (rendah = lebih baik)
+    muridList.sort((a, b) => a.gp - b.gp);
+
+    const top = document.getElementById("topStudentsCount").value;
+    const body = document.getElementById("muridTerbaikBody");
+    body.innerHTML = "";
+    muridList.slice(0, top).forEach((m, i) => {
+        body.innerHTML += `
+          <tr class="text-center">
+            <td class="px-2.5 py-2">${i + 1}</td>
+            <td class="px-2.5 py-2 text-left">${m.nama}</td>
+            <td class="px-2.5 py-2">${m.kelas}</td>
+            <td class="px-2.5 py-2 font-bold text-blue-600">${m.gp}</td>
+            ${topGradeLabels.map(g => `<td class="px-2.5 py-2">${m.counts[g] || 0}</td>`).join("")}
+          </tr>`;
+    });
+
+    // =======================
+    // 3. Carta & Jadual Subjek (kekal)
+    // =======================
+    updateGradeChartBySubject(dataTapis);
+    updateSubjectAnalysis(dataTapis);
+
+    // Tunjukkan semua kad hasil (tab 1)
+    document
+        .querySelectorAll('[data-tab-panel="keseluruhan"][data-reveal]')
+        .forEach(p => p.classList.remove('hidden'));
+}
 
                 function updateGradeChartBySubject(dataTapis) {
                     const ctx = document.getElementById("gradeChart").getContext("2d");
