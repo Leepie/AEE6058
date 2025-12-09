@@ -2297,13 +2297,17 @@ let subjectFlagMap = {};
                 }
 */
 //TAMBAHAN MULA
-              
-              function parseCSV(csv) {
-    // Buang baris kosong
+
+                function parseCSV(csv) {
     let lines = csv
         .split(/\r?\n/)
         .map(l => l.trim())
         .filter(l => l !== "");
+
+    console.log("👉 BILANGAN BARIS CSV (selepas trim):", lines.length);
+    console.log("👉 LINE[0]:", lines[0]);
+    console.log("👉 LINE[1]:", lines[1]);
+    console.log("👉 LINE[2]:", lines[2]);
 
     if (lines.length < 3) {
         console.error("❌ CSV format tidak mencukupi.");
@@ -2455,6 +2459,7 @@ let subjectFlagMap = {};
                 }
 
                 /* ========= INIT ========= */
+                /* TUTUPTUTUP
                 document.addEventListener('DOMContentLoaded', async () => {
                     try {
                         const res = await fetch(csvUrl);
@@ -2490,6 +2495,50 @@ let subjectFlagMap = {};
 
                     showTab('keseluruhan');
                 });
+                */
+                document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const res = await fetch(csvUrl);
+        console.log("👉 FETCH STATUS:", res.status, res.ok);
+
+        const csv = await res.text();
+
+        // ✅ Tunjuk 10 baris pertama CSV mentah
+        console.log("👉 CSV RAW PREVIEW:");
+        console.log(csv.split(/\r?\n/).slice(0, 10).join("\n"));
+
+        cachedData = parseCSV(csv);
+
+        console.log("👉 JUMLAH REKOD LEPAS PARSE:", cachedData.length);
+        console.log("👉 headerMap:", headerMap);
+        console.log("👉 subjectColumns:", subjectColumns);
+
+        if (cachedData.length > 0) {
+            console.log("👉 5 REKOD PERTAMA:");
+            console.table(cachedData.slice(0, 5));
+        } else {
+            console.warn("⚠️ cachedData kosong. Mungkin parseCSV ada masalah.");
+        }
+
+        // KPI header keseluruhan
+        kiraHeaderKPI(cachedData);
+
+        // Dropdown
+        autoIsiDropdownKelasKe(cachedData, "kelasFilter");
+        autoIsiDropdownKelasKe(cachedData, "kelasFilterMP");
+        autoIsiDropdownSubjekKe("subjekFilter");
+        autoIsiDropdownKelasKe(cachedData, "ls-kelasFilter");
+        autoIsiDropdownKelasKe(cachedData, "cz-kelasFilter");
+        autoIsiDropdownSubjekKe("cz-subjekFilter");
+        autoIsiDropdownKelasIndividu(cachedData);
+
+    } catch (e) {
+        console.error("❌ Ralat semasa fetch/parse CSV:", e);
+    }
+
+    showTab('keseluruhan');
+});
+
 /*
                 function kiraHeaderKPI(data) {
                     const gpsElHeader = document.getElementById('gpsValue');
