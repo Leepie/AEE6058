@@ -4,6 +4,7 @@
     XCode Analisis PPSA Vs PraSPM
     Tarikh Bina: 07 Dis 2025
     Script Oleh: Mr LePaK | PKP En Suhairi Hj. Shoib
+    Email: mrlepak@gmail.com | 017-4611774
     -->
 
     <head>
@@ -2174,11 +2175,6 @@
                     "Sains & Matematik": ["M", "SN", "MT", "FIZ", "BIO", "KIM"],
                     "Teknik & Vokasional": ["SK", "SRT", "PER", "PNG", "PA", "SS", "RC", "SPER"]
                 };
-//TAMBAHAN MULA
-
-
-
-//TAMBAHAN TAMAT
               
                 let headerMap = {},
                     subjectColumns = [],
@@ -2236,40 +2232,74 @@
                         return H.startsWith(upper + " ") && /\b(M|MARK|MARKAH|MARKS)\b/.test(H);
                     });
                 }
-/*
+
+//Update fungsi GPS ikut Subjek Utama
                 function parseCSV(csv) {
-                    const lines = csv.trim().split(/\r?\n/);
-
-                    // ✅ Guna parser selamat setiap baris
-                    const lineSubjek = parseCSVLine(lines[1] || "");
-                    const lineJenis = parseCSVLine(lines[2] || "");
-
+                    // Buang baris kosong
+                    let lines = csv
+                        .split(/\r?\n/)
+                        .map(l => l.trim())
+                        .filter(l => l !== "");
+                
+                    console.log("👉 BILANGAN BARIS CSV (selepas trim):", lines.length);
+                    console.log("👉 LINE[0]:", lines[0]);
+                    console.log("👉 LINE[1]:", lines[1]);
+                    console.log("👉 LINE[2]:", lines[2]);
+                
+                    if (lines.length < 3) {
+                        console.error("❌ CSV format tidak mencukupi.");
+                        return [];
+                    }
+                
+                    // --- 3 baris utama ---
+                    const flagRow   = parseCSVLine(lines[0]); // 0 / 1
+                    const subjekRow = parseCSVLine(lines[1]); // BIL, NO KP, BM, , BI, , M, ...
+                    const jenisRow  = parseCSVLine(lines[2]); // "", "", "", "", "", "M","G","M","G",...
+                
+                    // 🔹 Bina header penuh (contoh: "BM M", "BM G")
                     let currentSubjek = "";
-                    const headers = lineSubjek.map((subjek, i) => {
+                    const headers = subjekRow.map((subjek, i) => {
                         if (subjek) currentSubjek = subjek;
-                        return lineJenis[i] ? `${currentSubjek} ${lineJenis[i]}`.trim() : currentSubjek;
+                        return jenisRow[i] ? `${currentSubjek} ${jenisRow[i]}`.trim() : currentSubjek;
                     });
-
-                    // Simpan semua header
+                
+                    // Simpan ke headerMap (KEKAL macam asal)
                     headerMap = {};
                     headers.forEach(h => {
                         if (h) headerMap[(h || "").toLowerCase()] = h;
                     });
-
+                
                     console.log("✅ HeaderMap CSV yang digunakan sekarang:");
                     console.table(headerMap);
-
-                    // Tapis hanya kolum gred subjek
+                
+                    // 🆕 1. Bina subjectFlagMap ikut KOLUM MARKAH (M)
+                    subjectFlagMap = {};
+                    subjekRow.forEach((code, i) => {
+                        const jenis = (jenisRow[i] || "").toUpperCase(); // "M", "G", atau kosong
+                        const flag  = (flagRow[i]   || "").trim();       // "0" / "1" / ""
+                
+                        // hanya jika ia kolum markah subjek (M) & ada kod subjek
+                        if (code && jenis === "M" && (flag === "0" || flag === "1")) {
+                            subjectFlagMap[code.toUpperCase()] = flag;   // contoh: subjectFlagMap["PJK"] = "0"
+                        }
+                    });
+                
+                    console.log("📌 subjectFlagMap (0=elektif,1=wajib):", subjectFlagMap);
+                
+                    // 2. Tapis hanya kolum GRED subjek untuk analisis (KEKAL konsep lama)
                     subjectColumns = headers.filter(h => {
                         if (!h) return false;
                         const upper = (h || "").toUpperCase();
                         if (upper.includes("KESELURUHAN") || upper.includes("PURATA") || upper === "GPMP") {
                             return false;
                         }
+                        // ambil hanya kolum G (gred)
                         return /\b(G|GRED|GRADE)\b/i.test(upper);
                     });
-
-                    // Parse data murid
+                
+                    console.log("👉 subjectColumns:", subjectColumns);
+                
+                    // 3. Parse data murid (baris ke-4 dan seterusnya)
                     const dataRows = lines.slice(3).map(row => {
                         const vals = parseCSVLine(row);
                         const obj = {};
@@ -2278,114 +2308,20 @@
                         });
                         return obj;
                     });
-
-                    console.log("✅ Contoh data pertama:", dataRows[0]);
-
-                    // Debug fokus masalah ULASAN / KEDUDUKAN
+                
+                    console.log("📌 Rekod pertama:", dataRows[0]);
+                
+                    // Debug khas KEDUDUKAN / ULASAN (optional)
                     const kedTktnHdr = cariKolum("kedudukan dalam tingkatan");
-                    const ulasanHdr = cariKolum("ulasan");
+                    const ulasanHdr  = cariKolum("ulasan");
                     if (dataRows[0]) {
-                        console.log("📌 Semakan khas:");
                         console.log("→ KEDUDUKAN DALAM TINGKATAN:", dataRows[0][kedTktnHdr]);
                         console.log("→ ULASAN:", dataRows[0][ulasanHdr]);
                     }
-
+                
                     return dataRows;
                 }
-*/
-//TAMBAHAN MULA
 
-
-function parseCSV(csv) {
-    // Buang baris kosong
-    let lines = csv
-        .split(/\r?\n/)
-        .map(l => l.trim())
-        .filter(l => l !== "");
-
-    console.log("👉 BILANGAN BARIS CSV (selepas trim):", lines.length);
-    console.log("👉 LINE[0]:", lines[0]);
-    console.log("👉 LINE[1]:", lines[1]);
-    console.log("👉 LINE[2]:", lines[2]);
-
-    if (lines.length < 3) {
-        console.error("❌ CSV format tidak mencukupi.");
-        return [];
-    }
-
-    // --- 3 baris utama ---
-    const flagRow   = parseCSVLine(lines[0]); // 0 / 1
-    const subjekRow = parseCSVLine(lines[1]); // BIL, NO KP, BM, , BI, , M, ...
-    const jenisRow  = parseCSVLine(lines[2]); // "", "", "", "", "", "M","G","M","G",...
-
-    // 🔹 Bina header penuh (contoh: "BM M", "BM G")
-    let currentSubjek = "";
-    const headers = subjekRow.map((subjek, i) => {
-        if (subjek) currentSubjek = subjek;
-        return jenisRow[i] ? `${currentSubjek} ${jenisRow[i]}`.trim() : currentSubjek;
-    });
-
-    // Simpan ke headerMap (KEKAL macam asal)
-    headerMap = {};
-    headers.forEach(h => {
-        if (h) headerMap[(h || "").toLowerCase()] = h;
-    });
-
-    console.log("✅ HeaderMap CSV yang digunakan sekarang:");
-    console.table(headerMap);
-
-    // 🆕 1. Bina subjectFlagMap ikut KOLUM MARKAH (M)
-    subjectFlagMap = {};
-    subjekRow.forEach((code, i) => {
-        const jenis = (jenisRow[i] || "").toUpperCase(); // "M", "G", atau kosong
-        const flag  = (flagRow[i]   || "").trim();       // "0" / "1" / ""
-
-        // hanya jika ia kolum markah subjek (M) & ada kod subjek
-        if (code && jenis === "M" && (flag === "0" || flag === "1")) {
-            subjectFlagMap[code.toUpperCase()] = flag;   // contoh: subjectFlagMap["PJK"] = "0"
-        }
-    });
-
-    console.log("📌 subjectFlagMap (0=elektif,1=wajib):", subjectFlagMap);
-
-    // 2. Tapis hanya kolum GRED subjek untuk analisis (KEKAL konsep lama)
-    subjectColumns = headers.filter(h => {
-        if (!h) return false;
-        const upper = (h || "").toUpperCase();
-        if (upper.includes("KESELURUHAN") || upper.includes("PURATA") || upper === "GPMP") {
-            return false;
-        }
-        // ambil hanya kolum G (gred)
-        return /\b(G|GRED|GRADE)\b/i.test(upper);
-    });
-
-    console.log("👉 subjectColumns:", subjectColumns);
-
-    // 3. Parse data murid (baris ke-4 dan seterusnya)
-    const dataRows = lines.slice(3).map(row => {
-        const vals = parseCSVLine(row);
-        const obj = {};
-        headers.forEach((h, i) => {
-            obj[h] = (vals[i] || "").trim();
-        });
-        return obj;
-    });
-
-    console.log("📌 Rekod pertama:", dataRows[0]);
-
-    // Debug khas KEDUDUKAN / ULASAN (optional)
-    const kedTktnHdr = cariKolum("kedudukan dalam tingkatan");
-    const ulasanHdr  = cariKolum("ulasan");
-    if (dataRows[0]) {
-        console.log("→ KEDUDUKAN DALAM TINGKATAN:", dataRows[0][kedTktnHdr]);
-        console.log("→ ULASAN:", dataRows[0][ulasanHdr]);
-    }
-
-    return dataRows;
-}
-
-
-//TAMBAHAN TAMAT
                 // ✅ Parser baris CSV yang sokong tanda petik
                 function parseCSVLine(line) {
                     const result = [];
@@ -2467,101 +2403,81 @@ function parseCSV(csv) {
                 }
 
                 /* ========= INIT ========= */
-                /* TUTUPTUTUP
+                
                 document.addEventListener('DOMContentLoaded', async () => {
-                    try {
-                        const res = await fetch(csvUrl);
-                        const csv = await res.text();
-                        cachedData = parseCSV(csv);
-
-                        console.log("Jumlah rekod CSV:", cachedData.length);
-                        console.log("HeaderMap:", headerMap);
-                        console.log("SubjectColumns:", subjectColumns);
-                        console.log("Contoh baris 1:", cachedData[0]);
-
-                        // KPI header keseluruhan
-                        kiraHeaderKPI(cachedData);
-
-                        // Dropdown
-                        autoIsiDropdownKelasKe(cachedData, "kelasFilter");
-                        autoIsiDropdownKelasKe(cachedData, "kelasFilterMP");
-                        autoIsiDropdownSubjekKe("subjekFilter");
-
-                        //Layak Sijil
-                        autoIsiDropdownKelasKe(cachedData, "ls-kelasFilter"); // untuk Tab 3
-
-                        // ✅ Dropdown Tab 4 (Combat Zone)
-                        autoIsiDropdownKelasKe(cachedData, "cz-kelasFilter");
-                        autoIsiDropdownSubjekKe("cz-subjekFilter");
-
-                        // 🔥 Dropdown Tab 5 (Individu)
-                        autoIsiDropdownKelasIndividu(cachedData);
-
-                    } catch (e) {
-                        console.error(e);
-                    }
-
-                    showTab('keseluruhan');
-                });
-                */
-                document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        const res = await fetch(csvUrl);
-        console.log("👉 FETCH STATUS:", res.status, res.ok);
-
-        const csv = await res.text();
-
-        // ✅ Tunjuk 10 baris pertama CSV mentah
-        console.log("👉 CSV RAW PREVIEW:");
-        console.log(csv.split(/\r?\n/).slice(0, 10).join("\n"));
-
-        cachedData = parseCSV(csv);
-
-        console.log("👉 JUMLAH REKOD LEPAS PARSE:", cachedData.length);
-        console.log("👉 headerMap:", headerMap);
-        console.log("👉 subjectColumns:", subjectColumns);
-
-        if (cachedData.length > 0) {
-            console.log("👉 5 REKOD PERTAMA:");
-            console.table(cachedData.slice(0, 5));
-        } else {
-            console.warn("⚠️ cachedData kosong. Mungkin parseCSV ada masalah.");
-        }
-
-        // KPI header keseluruhan
-        kiraHeaderKPI(cachedData);
-
-        // Dropdown
-        autoIsiDropdownKelasKe(cachedData, "kelasFilter");
-        autoIsiDropdownKelasKe(cachedData, "kelasFilterMP");
-        autoIsiDropdownSubjekKe("subjekFilter");
-        autoIsiDropdownKelasKe(cachedData, "ls-kelasFilter");
-        autoIsiDropdownKelasKe(cachedData, "cz-kelasFilter");
-        autoIsiDropdownSubjekKe("cz-subjekFilter");
-        autoIsiDropdownKelasIndividu(cachedData);
-
-    } catch (e) {
-        console.error("❌ Ralat semasa fetch/parse CSV:", e);
-    }
-
-    showTab('keseluruhan');
-});
-
-/*
+            try {
+                const res = await fetch(csvUrl);
+                console.log("👉 FETCH STATUS:", res.status, res.ok);
+        
+                const csv = await res.text();
+        
+                // ✅ Tunjuk 10 baris pertama CSV mentah
+                console.log("👉 CSV RAW PREVIEW:");
+                console.log(csv.split(/\r?\n/).slice(0, 10).join("\n"));
+        
+                cachedData = parseCSV(csv);
+        
+                console.log("👉 JUMLAH REKOD LEPAS PARSE:", cachedData.length);
+                console.log("👉 headerMap:", headerMap);
+                console.log("👉 subjectColumns:", subjectColumns);
+        
+                if (cachedData.length > 0) {
+                    console.log("👉 5 REKOD PERTAMA:");
+                    console.table(cachedData.slice(0, 5));
+                } else {
+                    console.warn("⚠️ cachedData kosong. Mungkin parseCSV ada masalah.");
+                }
+        
+                // KPI header keseluruhan
+                kiraHeaderKPI(cachedData);
+        
+                // Dropdown
+                autoIsiDropdownKelasKe(cachedData, "kelasFilter");
+                autoIsiDropdownKelasKe(cachedData, "kelasFilterMP");
+                autoIsiDropdownSubjekKe("subjekFilter");
+                autoIsiDropdownKelasKe(cachedData, "ls-kelasFilter");
+                autoIsiDropdownKelasKe(cachedData, "cz-kelasFilter");
+                autoIsiDropdownSubjekKe("cz-subjekFilter");
+                autoIsiDropdownKelasIndividu(cachedData);
+        
+            } catch (e) {
+                console.error("❌ Ralat semasa fetch/parse CSV:", e);
+            }
+        
+            showTab('keseluruhan');
+        });
+              
                 function kiraHeaderKPI(data) {
-                    const gpsElHeader = document.getElementById('gpsValue');
+                    const gpsElHeader   = document.getElementById('gpsValue');
                     const sijilElHeader = document.getElementById('layakSijilValue');
-
-                    let jumlahNilai = 0,
-                        bilGred = 0,
-                        jumlahMurid = 0,
-                        layak = 0;
-                    const bmCol = cariKolumGredSubjek("BM");
+                
+                    let jumlahNilai  = 0,
+                        bilGred      = 0,
+                        jumlahMurid  = 0,
+                        layak        = 0;
+                
+                    const bmCol  = cariKolumGredSubjek("BM");
                     const sejCol = cariKolumGredSubjek("SEJ");
-
+                
+                    // 🆕 Senarai kolum GRED utk subjek WAJIB sahaja
+                    const wajibColumns = subjectColumns.filter(colName => {
+                        const subjCode = (colName.split(" ")[0] || "").toUpperCase(); // "BM" dari "BM G"
+                        const flag = subjectFlagMap[subjCode];
+                
+                        // Jika ada flag dan flag = "0" → subjek elektif, JANGAN kira
+                        if (flag === "0") return false;
+                
+                        // Jika tiada flag (contoh kolum tambahan), anggap WAJIB (untuk backward compatible)
+                        return true;
+                    });
+                
+                    console.log("👉 Kolum GRED subjek wajib yang dikira GPS:", wajibColumns);
+                
                     data.forEach(row => {
                         let adaGred = false;
-                        subjectColumns.forEach(col => {
+                
+                        // 🎯 GPS: hanya subjek wajib
+                        wajibColumns.forEach(col => {
                             const g = (row[col] || "").toUpperCase();
                             if (gradeValueMapping.hasOwnProperty(g)) {
                                 jumlahNilai += gradeValueMapping[g];
@@ -2569,90 +2485,33 @@ function parseCSV(csv) {
                                 adaGred = true;
                             }
                         });
+                
                         if (adaGred) {
                             jumlahMurid++;
-                            const bm = (bmCol ? row[bmCol] : "").toUpperCase();
+                
+                            // Layak Sijil: KEKAL syarat asal (BM & SEJ ≠ G)
+                            const bm  = (bmCol  ? row[bmCol]  : "").toUpperCase();
                             const sej = (sejCol ? row[sejCol] : "").toUpperCase();
-                            if (bm && sej && bm !== "G" && sej !== "G") layak++;
+                            if (bm && sej && bm !== "G" && sej !== "G") {
+                                layak++;
+                            }
                         }
                     });
-                    const gps = bilGred ? (jumlahNilai / bilGred).toFixed(2) : "-";
-                    const peratusLayak = jumlahMurid ? ((layak / jumlahMurid) * 100).toFixed(1) + "%" : "-";
-                    gpsElHeader.textContent = gps;
+                
+                    console.log("👉 jumlahNilai:", jumlahNilai, "bilGred:", bilGred, "jumlahMurid:", jumlahMurid, "layak:", layak);
+                
+                    const gps = bilGred
+                        ? (jumlahNilai / bilGred).toFixed(2)
+                        : "-";
+                
+                    const peratusLayak = jumlahMurid
+                        ? ((layak / jumlahMurid) * 100).toFixed(1) + "%"
+                        : "-";
+                
+                    gpsElHeader.textContent   = gps;
                     sijilElHeader.textContent = peratusLayak;
                 }
-*/
-              //TAMBAHAN MULA
-function kiraHeaderKPI(data) {
-    const gpsElHeader   = document.getElementById('gpsValue');
-    const sijilElHeader = document.getElementById('layakSijilValue');
 
-    let jumlahNilai  = 0,
-        bilGred      = 0,
-        jumlahMurid  = 0,
-        layak        = 0;
-
-    const bmCol  = cariKolumGredSubjek("BM");
-    const sejCol = cariKolumGredSubjek("SEJ");
-
-    // 🆕 Senarai kolum GRED utk subjek WAJIB sahaja
-    const wajibColumns = subjectColumns.filter(colName => {
-        const subjCode = (colName.split(" ")[0] || "").toUpperCase(); // "BM" dari "BM G"
-        const flag = subjectFlagMap[subjCode];
-
-        // Jika ada flag dan flag = "0" → subjek elektif, JANGAN kira
-        if (flag === "0") return false;
-
-        // Jika tiada flag (contoh kolum tambahan), anggap WAJIB (untuk backward compatible)
-        return true;
-    });
-
-    console.log("👉 Kolum GRED subjek wajib yang dikira GPS:", wajibColumns);
-
-    data.forEach(row => {
-        let adaGred = false;
-
-        // 🎯 GPS: hanya subjek wajib
-        wajibColumns.forEach(col => {
-            const g = (row[col] || "").toUpperCase();
-            if (gradeValueMapping.hasOwnProperty(g)) {
-                jumlahNilai += gradeValueMapping[g];
-                bilGred++;
-                adaGred = true;
-            }
-        });
-
-        if (adaGred) {
-            jumlahMurid++;
-
-            // Layak Sijil: KEKAL syarat asal (BM & SEJ ≠ G)
-            const bm  = (bmCol  ? row[bmCol]  : "").toUpperCase();
-            const sej = (sejCol ? row[sejCol] : "").toUpperCase();
-            if (bm && sej && bm !== "G" && sej !== "G") {
-                layak++;
-            }
-        }
-    });
-
-    console.log("👉 jumlahNilai:", jumlahNilai, "bilGred:", bilGred, "jumlahMurid:", jumlahMurid, "layak:", layak);
-
-    const gps = bilGred
-        ? (jumlahNilai / bilGred).toFixed(2)
-        : "-";
-
-    const peratusLayak = jumlahMurid
-        ? ((layak / jumlahMurid) * 100).toFixed(1) + "%"
-        : "-";
-
-    gpsElHeader.textContent   = gps;
-    sijilElHeader.textContent = peratusLayak;
-}
-
-
-
-
-              //TAMBAHAN TAMAT
-              
                 /* ========= TAB NAV ========= */
                 function switchTab(which) {
                     const ids = ['keseluruhan', 'matapelajaran', 'layaksijil', 'combatzone', 'individu'];
